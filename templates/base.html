@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expense Tracker</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg sticky-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('home') }}">
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="36" height="36" rx="10" fill="#6B4226"/>
+        <path d="M18 8C12.477 8 8 12.477 8 18C8 23.523 12.477 28 18 28C23.523 28 28 23.523 28 18C28 12.477 23.523 8 18 8Z" fill="#F5E6C8" opacity="0.15"/>
+        <text x="18" y="23" text-anchor="middle" font-family="Georgia" font-size="14" font-weight="bold" fill="#F5E6C8">₹</text>
+        <circle cx="18" cy="18" r="9" stroke="#D4A96A" stroke-width="1.5" fill="none"/>
+      </svg>
+      <span class="brand-name">Expense Tracker</span>
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto align-items-center gap-1">
+        {% if session.get('user_id') %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('home') }}"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('history') }}"><i class="bi bi-clock-history me-1"></i>History</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('split_page') }}"><i class="bi bi-people me-1"></i>Split</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('mess_page') }}"><i class="bi bi-cup-hot me-1"></i>Mess</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('profile_page') }}"><i class="bi bi-person-gear me-1"></i>Profile</a></li>
+          <li class="nav-item ms-2">
+            <span class="user-chip"><i class="bi bi-person-circle me-1"></i>{{ session.username }}</span>
+          </li>
+          <li class="nav-item">
+            <button id="darkModeToggle" class="btn btn-sm ms-1" style="background:transparent;border:1px solid rgba(212,169,106,0.4);color:var(--gold);border-radius:8px;padding:4px 10px" title="Toggle dark mode">🌙</button>
+          </li>
+          <li class="nav-item">
+            <a class="btn btn-logout btn-sm ms-1" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
+          </li>
+        {% else %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">Login</a></li>
+          <li class="nav-item"><a class="btn btn-nav-cta btn-sm ms-2" href="{{ url_for('register') }}">Register</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main>{% block content %}{% endblock %}</main>
+
+<footer class="site-footer mt-5 py-4">
+  <div class="container text-center">
+    <p class="footer-tagline mb-1">Expense Tracker — Your Pocket's Smart Manager</p>
+    <p class="footer-sub">Built by Team NAT</p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script src="{{ url_for('static', filename='js/ml.js') }}"></script>
+<script>
+  // Dark mode
+  (function(){
+    if(localStorage.getItem('darkMode')==='1') document.body.classList.add('dark-mode');
+  })();
+  document.addEventListener('DOMContentLoaded',()=>{
+    const btn = document.getElementById('darkModeToggle');
+    if(!btn) return;
+    function updateBtn(){ btn.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙'; }
+    updateBtn();
+    btn.addEventListener('click',()=>{
+      document.body.classList.toggle('dark-mode');
+      localStorage.setItem('darkMode', document.body.classList.contains('dark-mode') ? '1' : '0');
+      updateBtn();
+    });
+  });
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,526 @@
+{% extends "base.html" %}
+{% block title %}Split Bills — Expense Tracker{% endblock %}
+{% block content %}
+<div class="hero-banner py-3 mb-4">
+  <div class="container d-flex justify-content-between align-items-center">
+    <div>
+      <h4 class="mb-0" style="color:var(--cream)">🤝 Split Bills</h4>
+      <small style="color:rgba(245,230,200,0.75)">Splitwise-style expense splitting</small>
+    </div>
+    <button class="btn btn-sm" style="background:var(--gold);color:var(--brown-dark);font-weight:600"
+      data-bs-toggle="modal" data-bs-target="#newSplitModal">
+      <i class="bi bi-plus-circle me-1"></i>New Split
+    </button>
+  </div>
+</div>
+
+<div class="container pb-5">
+
+  <!-- Balance Summary Cards -->
+  <div class="row g-3 mb-4" id="balanceSummary"></div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mb-3" id="splitTabs">
+    <li class="nav-item">
+      <button class="nav-link active" onclick="switchTab('active', this)">Active</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" onclick="switchTab('settled', this)">Settled</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" onclick="switchTab('balances', this)">Balances</button>
+    </li>
+  </ul>
+
+  <!-- Splits List -->
+  <div id="splitsContainer"></div>
+
+</div>
+
+<!-- ── New Split Modal ──────────────────────────────────── -->
+<div class="modal fade" id="newSplitModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">➕ New Split Expense</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-5">
+            <label class="form-label small fw-semibold">Title</label>
+            <input type="text" class="form-control" id="splitTitle" placeholder="e.g. Goa Trip, Dinner at Taj">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-semibold">Total Amount (₹)</label>
+            <input type="number" class="form-control" id="splitTotal" placeholder="5000" min="1" oninput="updatePreview()">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label small fw-semibold">Date</label>
+            <input type="date" class="form-control" id="splitDate">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label small fw-semibold">Paid by</label>
+            <select class="form-select" id="splitPaidBy">
+              <option value="me">Me</option>
+            </select>
+          </div>
+
+          <!-- Friends -->
+          <div class="col-12">
+            <label class="form-label small fw-semibold">Friends involved (press Enter)</label>
+            <div class="input-group">
+              <input type="text" class="form-control" id="friendInput" placeholder="Friend's name"
+                onkeydown="if(event.key==='Enter'){addFriend();event.preventDefault();}">
+              <button class="btn btn-outline-brown" type="button" onclick="addFriend()">
+                <i class="bi bi-person-plus"></i>
+              </button>
+            </div>
+            <div id="friendChips" class="mt-2 d-flex flex-wrap gap-1"></div>
+          </div>
+
+          <!-- Split type -->
+          <div class="col-12">
+            <label class="form-label small fw-semibold">Split Type</label>
+            <div class="d-flex gap-3">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="splitType" id="typeEqual" value="equal" checked onchange="updatePreview()">
+                <label class="form-check-label" for="typeEqual">Equal</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="splitType" id="typeCustom" value="custom" onchange="updatePreview()">
+                <label class="form-check-label" for="typeCustom">Custom</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="splitType" id="typePercent" value="percent" onchange="updatePreview()">
+                <label class="form-check-label" for="typePercent">Percentage</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preview -->
+          <div class="col-12" id="splitPreviewDiv" style="display:none">
+            <label class="form-label small fw-semibold">Split Preview</label>
+            <div id="splitPreview" class="p-3 rounded-3" style="background:rgba(212,169,106,0.1);font-size:0.88rem"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-brown" onclick="createSplit()">
+          <i class="bi bi-check-circle me-1"></i>Create Split
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Settle Up Modal ──────────────────────────────────── -->
+<div class="modal fade" id="settleModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">💸 Settle Up</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="settleModalBody"></div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-success" id="settleConfirmBtn">Mark Settled</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const MY_NAME = "{{ username }}";
+let friends = [];
+let splits = [];
+let currentTab = 'active';
+
+// ── Init ───────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('splitDate').value = new Date().toISOString().split('T')[0];
+  loadSplits();
+});
+
+function switchTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll('#splitTabs .nav-link').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAll();
+}
+
+// ── Friends ────────────────────────────────────────────────
+function addFriend() {
+  const input = document.getElementById('friendInput');
+  const name = input.value.trim();
+  if (!name || friends.map(f=>f.toLowerCase()).includes(name.toLowerCase()) || name.toLowerCase() === MY_NAME.toLowerCase()) {
+    input.value = ''; return;
+  }
+  friends.push(name);
+  input.value = '';
+  renderFriendChips();
+  updatePaidByOptions();
+  updatePreview();
+}
+
+function removeFriend(name) {
+  friends = friends.filter(f => f !== name);
+  renderFriendChips();
+  updatePaidByOptions();
+  updatePreview();
+}
+
+function renderFriendChips() {
+  document.getElementById('friendChips').innerHTML = friends.map(f => `
+    <span class="split-friend-chip">
+      👤 ${f}
+      <button class="btn btn-sm p-0 ms-1" style="font-size:0.7rem;color:#c62828;background:none;border:none"
+        onclick="removeFriend('${f}')">✕</button>
+    </span>`).join('');
+}
+
+function updatePaidByOptions() {
+  const sel = document.getElementById('splitPaidBy');
+  const cur = sel.value;
+  sel.innerHTML = `<option value="me">Me (${MY_NAME})</option>` +
+    friends.map(f => `<option value="${f}">${f}</option>`).join('');
+  if ([...sel.options].some(o => o.value === cur)) sel.value = cur;
+}
+
+// ── Preview ────────────────────────────────────────────────
+function updatePreview() {
+  const total = parseFloat(document.getElementById('splitTotal').value) || 0;
+  const type = document.querySelector('input[name="splitType"]:checked').value;
+  const previewDiv = document.getElementById('splitPreviewDiv');
+  const preview = document.getElementById('splitPreview');
+  const allPeople = [MY_NAME, ...friends];
+
+  if (!total || allPeople.length < 2) { previewDiv.style.display = 'none'; return; }
+  previewDiv.style.display = 'block';
+
+  if (type === 'equal') {
+    const per = (total / allPeople.length).toFixed(2);
+    preview.innerHTML = allPeople.map(p =>
+      `<div class="d-flex justify-content-between"><span>👤 <b>${p}</b></span><span>₹${parseFloat(per).toLocaleString('en-IN')}</span></div>`
+    ).join('');
+  } else if (type === 'custom') {
+    preview.innerHTML = allPeople.map(p => `
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <span style="min-width:110px">👤 ${p}</span>
+        <input type="number" class="form-control form-control-sm" id="custom_${p}"
+          placeholder="₹ amount" style="max-width:130px" oninput="checkCustomTotal(${total})">
+      </div>`).join('') +
+      `<div id="customTotalCheck" class="small mt-1"></div>`;
+  } else {
+    preview.innerHTML = allPeople.map(p => `
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <span style="min-width:110px">👤 ${p}</span>
+        <input type="number" class="form-control form-control-sm" id="pct_${p}"
+          placeholder="%" style="max-width:90px" oninput="checkPctTotal()">
+        <span class="text-muted small" id="pctamt_${p}"></span>
+      </div>`).join('') +
+      `<div id="pctTotalCheck" class="small mt-1"></div>`;
+  }
+}
+
+function checkCustomTotal(total) {
+  const allPeople = [MY_NAME, ...friends];
+  const sum = allPeople.reduce((s, p) => s + (parseFloat(document.getElementById(`custom_${p}`)?.value) || 0), 0);
+  const el = document.getElementById('customTotalCheck');
+  const diff = Math.abs(sum - total);
+  el.innerHTML = diff < 0.01
+    ? `<span class="text-success">✅ Adds up to ₹${total.toLocaleString('en-IN')}</span>`
+    : `<span class="text-danger">⚠️ Total so far: ₹${sum.toLocaleString('en-IN')} / ₹${total.toLocaleString('en-IN')}</span>`;
+}
+
+function checkPctTotal() {
+  const total = parseFloat(document.getElementById('splitTotal').value) || 0;
+  const allPeople = [MY_NAME, ...friends];
+  let sum = 0;
+  allPeople.forEach(p => {
+    const pct = parseFloat(document.getElementById(`pct_${p}`)?.value) || 0;
+    sum += pct;
+    const amtEl = document.getElementById(`pctamt_${p}`);
+    if (amtEl) amtEl.textContent = pct ? `= ₹${(total * pct / 100).toFixed(0)}` : '';
+  });
+  const el = document.getElementById('pctTotalCheck');
+  el.innerHTML = Math.abs(sum - 100) < 0.01
+    ? `<span class="text-success">✅ 100%</span>`
+    : `<span class="text-danger">⚠️ Total: ${sum}% (must be 100%)</span>`;
+}
+
+// ── Create Split ───────────────────────────────────────────
+async function createSplit() {
+  const title   = document.getElementById('splitTitle').value.trim();
+  const total   = parseFloat(document.getElementById('splitTotal').value);
+  const date    = document.getElementById('splitDate').value;
+  const paidBy  = document.getElementById('splitPaidBy').value === 'me' ? MY_NAME : document.getElementById('splitPaidBy').value;
+  const type    = document.querySelector('input[name="splitType"]:checked').value;
+  const allPeople = [MY_NAME, ...friends];
+
+  if (!title || !total || friends.length < 1) {
+    alert('Please fill title, total amount, and add at least one friend.'); return;
+  }
+
+  let shares = {};
+  if (type === 'equal') {
+    const per = parseFloat((total / allPeople.length).toFixed(2));
+    allPeople.forEach(p => shares[p] = per);
+  } else if (type === 'custom') {
+    let sum = 0;
+    allPeople.forEach(p => {
+      shares[p] = parseFloat(document.getElementById(`custom_${p}`)?.value) || 0;
+      sum += shares[p];
+    });
+    if (Math.abs(sum - total) > 1) { alert(`Custom amounts must add up to ₹${total}. Current total: ₹${sum}`); return; }
+  } else {
+    let sum = 0;
+    allPeople.forEach(p => {
+      const pct = parseFloat(document.getElementById(`pct_${p}`)?.value) || 0;
+      shares[p] = parseFloat((total * pct / 100).toFixed(2));
+      sum += pct;
+    });
+    if (Math.abs(sum - 100) > 0.5) { alert(`Percentages must add up to 100%. Current: ${sum}%`); return; }
+  }
+
+  // Build per-person settlement status
+  let settlements = {};
+  allPeople.forEach(p => {
+    settlements[p] = { amount: shares[p], settled: p === paidBy };
+  });
+
+  const payload = { title, total, date, paid_by: paidBy, friends, split_type: type, shares, settlements };
+
+  const res = await fetch('/api/splits', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  });
+  if (res.ok) {
+    bootstrap.Modal.getInstance(document.getElementById('newSplitModal')).hide();
+    document.getElementById('splitTitle').value = '';
+    document.getElementById('splitTotal').value = '';
+    friends = [];
+    renderFriendChips();
+    document.getElementById('splitPreviewDiv').style.display = 'none';
+    updatePaidByOptions();
+    loadSplits();
+  } else {
+    alert('Error creating split. Please try again.');
+  }
+}
+
+// ── Load & Render ──────────────────────────────────────────
+async function loadSplits() {
+  const res = await fetch('/api/splits');
+  const data = await res.json();
+  splits = data.splits || [];
+  renderAll();
+}
+
+function renderAll() {
+  renderBalanceSummary();
+  if (currentTab === 'active')   renderSplitsList(false);
+  else if (currentTab === 'settled') renderSplitsList(true);
+  else renderBalancesTab();
+}
+
+// ── Balance Summary Cards ──────────────────────────────────
+function renderBalanceSummary() {
+  const { youAreOwed, youOwe } = computeBalances();
+  const totalOwed = Object.values(youAreOwed).reduce((s,v)=>s+v,0);
+  const totalOwe  = Object.values(youOwe).reduce((s,v)=>s+v,0);
+  const net = totalOwed - totalOwe;
+
+  document.getElementById('balanceSummary').innerHTML = `
+    <div class="col-md-4">
+      <div class="card text-center p-3">
+        <div class="small text-muted mb-1">Total Balance</div>
+        <div class="fw-bold fs-5" style="color:${net>=0?'#2e7d32':'#c62828'}">
+          ${net>=0?'+':''}₹${Math.abs(net).toLocaleString('en-IN')}
+        </div>
+        <div class="small text-muted">${net>=0?'you are owed':'you owe'}</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-center p-3">
+        <div class="small text-muted mb-1">You are owed</div>
+        <div class="fw-bold fs-5" style="color:#2e7d32">₹${totalOwed.toLocaleString('en-IN')}</div>
+        <div class="small text-muted">from ${Object.keys(youAreOwed).length} friend(s)</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-center p-3">
+        <div class="small text-muted mb-1">You owe</div>
+        <div class="fw-bold fs-5" style="color:#c62828">₹${totalOwe.toLocaleString('en-IN')}</div>
+        <div class="small text-muted">to ${Object.keys(youOwe).length} friend(s)</div>
+      </div>
+    </div>`;
+}
+
+function computeBalances() {
+  let youAreOwed = {}, youOwe = {};
+  splits.forEach(s => {
+    const settlements = s.settlements || {};
+    const paidBy = s.paid_by;
+    Object.entries(settlements).forEach(([person, info]) => {
+      if (info.settled) return;
+      if (paidBy === MY_NAME && person !== MY_NAME) {
+        youAreOwed[person] = (youAreOwed[person] || 0) + info.amount;
+      } else if (paidBy !== MY_NAME && person === MY_NAME) {
+        youOwe[paidBy] = (youOwe[paidBy] || 0) + info.amount;
+      }
+    });
+  });
+  return { youAreOwed, youOwe };
+}
+
+// ── Splits List ────────────────────────────────────────────
+function renderSplitsList(showSettled) {
+  const filtered = splits.filter(s => {
+    const allSettled = Object.values(s.settlements||{}).every(v=>v.settled);
+    return showSettled ? allSettled : !allSettled;
+  });
+  const el = document.getElementById('splitsContainer');
+  if (!filtered.length) {
+    el.innerHTML = `<div class="text-center text-muted py-5">
+      <div style="font-size:2rem">🤝</div>
+      <div>${showSettled ? 'No settled splits yet.' : 'No active splits. Create one!'}</div>
+    </div>`; return;
+  }
+
+  el.innerHTML = filtered.sort((a,b)=>b.date.localeCompare(a.date)).map(s => {
+    const settlements = s.settlements || {};
+    const paidBy = s.paid_by || MY_NAME;
+    const allSettled = Object.values(settlements).every(v=>v.settled);
+    const myShare = settlements[MY_NAME]?.amount || 0;
+    const mySettled = settlements[MY_NAME]?.settled || false;
+    const iOwed = paidBy === MY_NAME;
+
+    // Who owes what
+    const rows = Object.entries(settlements)
+      .filter(([p]) => p !== paidBy)
+      .map(([person, info]) => `
+        <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+          <span>👤 <b>${person}</b> owes <b>${paidBy === MY_NAME ? 'you' : paidBy}</b></span>
+          <div class="d-flex align-items-center gap-2">
+            <span style="color:${info.settled?'#2e7d32':'#c62828'}">
+              ${info.settled ? '✅' : '⏳'} ₹${info.amount.toLocaleString('en-IN')}
+            </span>
+            ${!info.settled && paidBy === MY_NAME ? `
+              <button class="btn btn-sm btn-outline-success py-0" 
+                onclick="settlePerson(${s.id}, '${person}')">Settle</button>` : ''}
+          </div>
+        </div>`).join('');
+
+    return `
+    <div class="split-card mb-3">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div>
+          <strong style="font-size:1.05rem">${s.title}</strong>
+          <span class="badge ms-2 ${allSettled ? 'bg-success' : 'bg-warning text-dark'}">
+            ${allSettled ? 'Settled' : 'Active'}
+          </span>
+        </div>
+        <strong style="color:var(--brown-dark);font-size:1.1rem">₹${parseFloat(s.total).toLocaleString('en-IN')}</strong>
+      </div>
+      <div class="text-muted small mb-2">
+        📅 ${s.date} &nbsp;|&nbsp; 
+        💳 Paid by <b>${paidBy === MY_NAME ? 'You' : paidBy}</b> &nbsp;|&nbsp;
+        👥 ${[MY_NAME, ...(s.friends||[])].join(', ')}
+      </div>
+      <div class="mb-2">${rows}</div>
+      <div class="d-flex gap-2 mt-2">
+        ${!allSettled && !iOwed && !mySettled ? `
+          <button class="btn btn-sm btn-success" onclick="settleMyShare(${s.id})">
+            <i class="bi bi-check2 me-1"></i>Pay my share (₹${myShare.toLocaleString('en-IN')})
+          </button>` : ''}
+        ${!allSettled ? `
+          <button class="btn btn-sm btn-outline-brown" onclick="settleAll(${s.id})">
+            Settle All
+          </button>` : ''}
+        <button class="btn btn-sm btn-outline-danger ms-auto" onclick="deleteSplit(${s.id})">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Balances Tab ───────────────────────────────────────────
+function renderBalancesTab() {
+  const { youAreOwed, youOwe } = computeBalances();
+  const el = document.getElementById('splitsContainer');
+
+  let html = '';
+  const owedEntries = Object.entries(youAreOwed).filter(([,v])=>v>0);
+  const oweEntries  = Object.entries(youOwe).filter(([,v])=>v>0);
+
+  if (!owedEntries.length && !oweEntries.length) {
+    html = `<div class="text-center text-muted py-5"><div style="font-size:2rem">🎉</div><div>All settled up!</div></div>`;
+  } else {
+    if (owedEntries.length) {
+      html += `<h6 class="fw-semibold mb-2" style="color:#2e7d32">💚 Owed to You</h6>`;
+      html += owedEntries.map(([person, amt]) => `
+        <div class="card mb-2 p-3 d-flex flex-row justify-content-between align-items-center">
+          <span>👤 <b>${person}</b> owes you</span>
+          <div class="d-flex align-items-center gap-3">
+            <strong style="color:#2e7d32">₹${amt.toLocaleString('en-IN')}</strong>
+            <button class="btn btn-sm btn-outline-success" onclick="settleWithFriend('${person}')">Settle</button>
+          </div>
+        </div>`).join('');
+    }
+    if (oweEntries.length) {
+      html += `<h6 class="fw-semibold mb-2 mt-3" style="color:#c62828">❤️ You Owe</h6>`;
+      html += oweEntries.map(([person, amt]) => `
+        <div class="card mb-2 p-3 d-flex flex-row justify-content-between align-items-center">
+          <span>You owe <b>${person}</b></span>
+          <strong style="color:#c62828">₹${amt.toLocaleString('en-IN')}</strong>
+        </div>`).join('');
+    }
+  }
+  el.innerHTML = html;
+}
+
+// ── Settle Actions ─────────────────────────────────────────
+async function settlePerson(splitId, person) {
+  await fetch(`/api/splits/${splitId}/settle`, {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ person })
+  });
+  loadSplits();
+}
+
+async function settleMyShare(splitId) {
+  await settlePerson(splitId, MY_NAME);
+}
+
+async function settleAll(splitId) {
+  await fetch(`/api/splits/${splitId}/settle-all`, { method: 'POST' });
+  loadSplits();
+}
+
+async function settleWithFriend(friendName) {
+  // Settle all splits where this friend owes you
+  const relevant = splits.filter(s =>
+    s.paid_by === MY_NAME &&
+    s.settlements?.[friendName] &&
+    !s.settlements[friendName].settled
+  );
+  for (const s of relevant) {
+    await settlePerson(s.id, friendName);
+  }
+  loadSplits();
+}
+
+async function deleteSplit(id) {
+  if (!confirm('Delete this split?')) return;
+  await fetch(`/api/splits/${id}`, { method: 'DELETE' });
+  loadSplits();
+}
+</script>
+{% endblock %}

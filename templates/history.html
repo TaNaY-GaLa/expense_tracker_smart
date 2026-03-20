@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="currency-hero">
+  <div class="currency-notes">
+    <div class="note note-1"></div><div class="note note-2"></div><div class="note note-3"></div>
+    <div class="note note-4"></div><div class="note note-5"></div>
+    <span class="float-sym fs1">₹</span><span class="float-sym fs2">$</span>
+    <span class="float-sym fs3">€</span><span class="float-sym fs4">£</span>
+  </div>
+  <div class="container hero-content">
+    <h1 class="hero-title">Transaction <span>History</span></h1>
+    <p class="hero-sub">All your recorded expenses in one place.</p>
+  </div>
+</div>
+
+<section class="py-4">
+  <div class="container">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+      <div>
+        <h4 style="font-family:var(--font-head);color:var(--brown-dark)" class="mb-0">All Expenses</h4>
+        <small class="text-muted" id="resultCount"></small>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="btn btn-outline-brown btn-sm" onclick="exportCSV()"><i class="bi bi-download me-1"></i>Export CSV</button>
+        <button class="btn btn-add btn-sm" data-bs-toggle="modal" data-bs-target="#addModal"><i class="bi bi-plus-lg me-1"></i>Add Expense</button>
+      </div>
+    </div>
+
+    <div id="warningBanner" class="alert d-none mb-4 py-2" role="alert"></div>
+    <div id="anomalyBanner" class="alert d-none mb-3 py-2" style="background:#fff3e0;border:1px solid #e65100;color:#bf360c;border-radius:12px" role="alert"></div>
+
+    <!-- Charts -->
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-md-6">
+        <div class="card">
+          <div class="card-header pt-3">📊 Monthly Expenses</div>
+          <div class="card-body"><canvas id="barChart" height="200"></canvas></div>
+        </div>
+      </div>
+      <div class="col-12 col-md-6">
+        <div class="card">
+          <div class="card-header pt-3">🍩 Category Breakdown</div>
+          <div class="card-body d-flex justify-content-center"><canvas id="doughnutChart" height="200"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search & Filter -->
+    <div class="filter-card p-3 mb-4">
+      <div class="row g-2">
+        <div class="col-12 col-md-4">
+          <input type="text" class="form-control form-control-sm" id="searchInput" placeholder="🔍 Search by title..." oninput="filterTable()">
+        </div>
+        <div class="col-6 col-md-2">
+          <select class="form-select form-select-sm" id="filterCategory" onchange="filterTable()">
+            <option value="">All Categories</option>
+            <option>Food</option><option>Clothing</option><option>Travel</option>
+            <option>Books</option><option>Entertainment</option><option>Health</option><option>Other</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-2">
+          <input type="date" class="form-control form-control-sm" id="filterFrom" onchange="filterTable()" title="From">
+        </div>
+        <div class="col-6 col-md-2">
+          <input type="date" class="form-control form-control-sm" id="filterTo" onchange="filterTable()" title="To">
+        </div>
+        <div class="col-6 col-md-2">
+          <button class="btn btn-outline-brown btn-sm w-100" onclick="clearFilters()"><i class="bi bi-x-circle me-1"></i>Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0" id="historyTable">
+            <thead class="table-head">
+              <tr>
+                <th class="sortable" onclick="sortTable('id')"># <i class="bi bi-arrow-down-up ms-1 small"></i></th>
+                <th class="sortable" onclick="sortTable('title')">Title <i class="bi bi-arrow-down-up ms-1 small"></i></th>
+                <th>Category</th>
+                <th class="sortable" onclick="sortTable('date')">Date <i class="bi bi-arrow-down-up ms-1 small"></i></th>
+                <th class="sortable" onclick="sortTable('amount_inr')">Amount (₹) <i class="bi bi-arrow-down-up ms-1 small"></i></th>
+                <th>Original</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="historyBody">
+              <tr><td colspan="7" class="text-center py-4 text-muted">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Add/Edit Modal -->
+<div class="modal fade" id="addModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTitle">Add Expense</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="formError" class="alert alert-danger d-none py-2 small"></div>
+        <div id="duplicateWarning" class="alert alert-warning d-none py-2 small"></div>
+        <input type="hidden" id="editId">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">Title</label>
+            <input type="text" class="form-control" id="txnTitle" placeholder="e.g. Lunch, Textbook...">
+            <div id="mlCategoryChip" class="mt-1 d-none"></div>
+          </div>
+          <div class="col-7">
+            <label class="form-label">Amount</label>
+            <input type="number" class="form-control" id="txnAmount" placeholder="0.00" min="0.01" step="0.01">
+          </div>
+          <div class="col-5">
+            <label class="form-label">Currency</label>
+            <select class="form-select" id="txnCurrency">
+              <option value="INR">₹ INR</option><option value="USD">$ USD</option>
+              <option value="EUR">€ EUR</option><option value="GBP">£ GBP</option>
+              <option value="JPY">¥ JPY</option><option value="AED">د.إ AED</option><option value="SGD">S$ SGD</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Category</label>
+            <select class="form-select" id="txnCategory" onchange="toggleCustom()">
+              <option value="">Select category</option>
+              <option>Food</option><option>Clothing</option><option>Travel</option>
+              <option>Books</option><option>Entertainment</option><option>Health</option><option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="col-12 d-none" id="customCatDiv">
+            <label class="form-label">Custom Category</label>
+            <input type="text" class="form-control" id="customCat" placeholder="Type category name">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-control" id="txnDate">
+          </div>
+        </div>
+        <div class="mt-3 p-2 inr-preview d-none" id="inrPreview">
+          <small><i class="bi bi-currency-rupee me-1"></i>INR equivalent: <strong id="inrEq">—</strong></small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-brown" onclick="submitTransaction()"><i class="bi bi-check-lg me-1"></i>Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/history.js') }}"></script>
+{% endblock %}

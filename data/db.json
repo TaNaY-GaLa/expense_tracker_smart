@@ -1,0 +1,96 @@
+{
+    "users": [
+        {
+            "id": 1,
+            "username": "ketan",
+            "password": "ketangala",
+            "email": "kgala13dec@gmail.com",
+            "mobile": "9967552298",
+            "budget": 20000
+        }
+    ],
+    "transactions": [
+        {
+            "id": 1,
+            "user_id": 1,
+            "title": "maintenance",
+            "amount": 10000.0,
+            "category": "home",
+            "date": "2026-03-01",
+            "currency": "INR",
+            "amount_inr": 10000.0
+        },
+        {
+            "id": 2,
+            "user_id": 1,
+            "title": "dinner",
+            "amount": 3000.0,
+            "category": "Food",
+            "date": "2026-03-08",
+            "currency": "INR",
+            "amount_inr": 3000.0
+        },
+        {
+            "id": 3,
+            "user_id": 1,
+            "title": "goa",
+            "amount": 20000.0,
+            "category": "Travel",
+            "date": "2026-01-20",
+            "currency": "INR",
+            "amount_inr": 20000.0
+        }
+    ],
+    "splits": [
+        {
+            "id": 1,
+            "user_id": 1,
+            "title": "dinner",
+            "total": 4500.0,
+            "date": "2026-03-15",
+            "paid_by": "tanay",
+            "friends": [
+                "dhilu",
+                "momo",
+                "party",
+                "jamail",
+                "ray"
+            ],
+            "split_type": "percent",
+            "shares": {
+                "tanay": 450,
+                "dhilu": 225,
+                "momo": 270,
+                "party": 2250,
+                "jamail": 405,
+                "ray": 900
+            },
+            "settlements": {
+                "tanay": {
+                    "amount": 450,
+                    "settled": true
+                },
+                "dhilu": {
+                    "amount": 225,
+                    "settled": false
+                },
+                "momo": {
+                    "amount": 270,
+                    "settled": false
+                },
+                "party": {
+                    "amount": 2250,
+                    "settled": false
+                },
+                "jamail": {
+                    "amount": 405,
+                    "settled": false
+                },
+                "ray": {
+                    "amount": 900,
+                    "settled": false
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-wrap">
+
+  <!-- Hero with currency notes feel -->
+  <div class="auth-hero">
+    <div class="auth-logo-wrap">
+      <svg width="40" height="40" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="36" height="36" rx="10" fill="#6B4226"/>
+        <text x="18" y="23" text-anchor="middle" font-family="Georgia" font-size="14" font-weight="bold" fill="#F5E6C8">₹</text>
+        <circle cx="18" cy="18" r="9" stroke="#D4A96A" stroke-width="1.5" fill="none"/>
+      </svg>
+      <span class="auth-app-name">Expense Tracker</span>
+    </div>
+    <p class="auth-tagline">Know Where Your Money Goes</p>
+  </div>
+
+  <div class="container py-4 flex-grow-1 d-flex align-items-start justify-content-center">
+    <div class="col-12 col-sm-10 col-md-7 col-lg-5">
+      <div class="auth-card p-4 p-md-5">
+        <h4 class="text-center mb-1" style="font-family:var(--font-head);color:var(--brown-dark)">Welcome Back</h4>
+        <p class="text-center text-muted small mb-4">Sign in to your account</p>
+
+        {% if error %}
+        <div class="alert alert-danger py-2 small"><i class="bi bi-exclamation-triangle me-1"></i>{{ error }}</div>
+        {% endif %}
+
+        <form id="loginForm" method="POST" novalidate>
+          <div class="mb-3">
+            <label class="form-label">Username</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-person"></i></span>
+              <input type="text" class="form-control" id="lUser" name="username" placeholder="Enter username" required>
+            </div>
+            <div class="invalid-feedback" id="lUserErr"></div>
+          </div>
+          <div class="mb-4">
+            <label class="form-label">Password</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-lock"></i></span>
+              <input type="password" class="form-control" id="lPass" name="password" placeholder="Enter password" required>
+              <button class="btn btn-outline-secondary" type="button" onclick="tp('lPass')"><i class="bi bi-eye"></i></button>
+            </div>
+            <div class="invalid-feedback" id="lPassErr"></div>
+          </div>
+          <button type="submit" class="btn btn-brown w-100 py-2">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Login
+          </button>
+        </form>
+        <hr class="my-3" style="border-color:var(--cream-dark)">
+        <p class="text-center small mb-0">Don't have an account? <a href="{{ url_for('register') }}" class="auth-link">Register here</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function tp(id) { const e=document.getElementById(id); e.type=e.type==='password'?'text':'password'; }
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+  let v = true;
+  const u = document.getElementById('lUser'), p = document.getElementById('lPass');
+  if (!u.value.trim() || u.value.trim().length < 3) {
+    u.classList.add('is-invalid'); document.getElementById('lUserErr').textContent='Min. 3 characters.'; v=false;
+  } else { u.classList.remove('is-invalid'); u.classList.add('is-valid'); }
+  if (!p.value || p.value.length < 4) {
+    p.classList.add('is-invalid'); document.getElementById('lPassErr').textContent='Password required.'; v=false;
+  } else { p.classList.remove('is-invalid'); p.classList.add('is-valid'); }
+  if (!v) e.preventDefault();
+});
+</script>
+{% endblock %}

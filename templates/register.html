@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-hero">
+    <div class="auth-logo-wrap">
+      <svg width="40" height="40" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="36" height="36" rx="10" fill="#6B4226"/>
+        <text x="18" y="23" text-anchor="middle" font-family="Georgia" font-size="14" font-weight="bold" fill="#F5E6C8">₹</text>
+        <circle cx="18" cy="18" r="9" stroke="#D4A96A" stroke-width="1.5" fill="none"/>
+      </svg>
+      <span class="auth-app-name">Expense Tracker</span>
+    </div>
+    <p class="auth-tagline">Know Where Your Money Goes</p>
+  </div>
+
+  <div class="container py-4 flex-grow-1 d-flex align-items-start justify-content-center">
+    <div class="col-12 col-sm-10 col-md-8 col-lg-6">
+      <div class="auth-card p-4 p-md-5">
+        <h4 class="text-center mb-1" style="font-family:var(--font-head);color:var(--brown-dark)">Create Account</h4>
+        <p class="text-center text-muted small mb-4">Join and start tracking your expenses</p>
+
+        {% if error %}
+        <div class="alert alert-danger py-2 small"><i class="bi bi-exclamation-triangle me-1"></i>{{ error }}</div>
+        {% endif %}
+
+        <form id="regForm" method="POST" novalidate>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Username <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                <input type="text" class="form-control" id="rUser" name="username" placeholder="Min. 3 characters" required>
+              </div>
+              <div class="invalid-feedback" id="rUserErr"></div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Email Address <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                <input type="email" class="form-control" id="rEmail" name="email" placeholder="you@example.com" required>
+              </div>
+              <div class="invalid-feedback" id="rEmailErr"></div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Mobile Number <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-phone"></i></span>
+                <input type="tel" class="form-control" id="rMobile" name="mobile" placeholder="10-digit mobile" maxlength="10" required>
+              </div>
+              <div class="invalid-feedback" id="rMobileErr"></div>
+              <div class="form-text">Starts with 6–9, 10 digits</div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="form-label">Password <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                <input type="password" class="form-control" id="rPass" name="password" placeholder="Min. 6 chars" required>
+                <button class="btn btn-outline-secondary" type="button" onclick="tp('rPass')"><i class="bi bi-eye"></i></button>
+              </div>
+              <div class="invalid-feedback" id="rPassErr"></div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                <input type="password" class="form-control" id="rConf" placeholder="Re-enter" required>
+                <button class="btn btn-outline-secondary" type="button" onclick="tp('rConf')"><i class="bi bi-eye"></i></button>
+              </div>
+              <div class="invalid-feedback" id="rConfErr"></div>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-brown w-100 py-2 mt-4">
+            <i class="bi bi-person-check me-2"></i>Create Account
+          </button>
+        </form>
+        <hr class="my-3" style="border-color:var(--cream-dark)">
+        <p class="text-center small mb-0">Already have an account? <a href="{{ url_for('login') }}" class="auth-link">Login here</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function tp(id) { const e=document.getElementById(id); e.type=e.type==='password'?'text':'password'; }
+document.getElementById('rMobile').addEventListener('input', function(){ this.value=this.value.replace(/\D/g,''); });
+document.getElementById('regForm').addEventListener('submit', function(e) {
+  let v=true;
+  const u=document.getElementById('rUser'), em=document.getElementById('rEmail'),
+        mo=document.getElementById('rMobile'), p=document.getElementById('rPass'), c=document.getElementById('rConf');
+  // Username
+  if(!/^[a-zA-Z0-9_]{3,20}$/.test(u.value.trim())) {
+    u.classList.add('is-invalid'); document.getElementById('rUserErr').textContent='3–20 alphanumeric chars.'; v=false;
+  } else { u.classList.remove('is-invalid'); u.classList.add('is-valid'); }
+  // Email
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em.value.trim())) {
+    em.classList.add('is-invalid'); document.getElementById('rEmailErr').textContent='Enter valid email (e.g. user@example.com).'; v=false;
+  } else { em.classList.remove('is-invalid'); em.classList.add('is-valid'); }
+  // Mobile
+  if(!/^[6-9]\d{9}$/.test(mo.value.trim())) {
+    mo.classList.add('is-invalid'); document.getElementById('rMobileErr').textContent='10-digit Indian mobile, starts with 6–9.'; v=false;
+  } else { mo.classList.remove('is-invalid'); mo.classList.add('is-valid'); }
+  // Password
+  if(p.value.length < 6) {
+    p.classList.add('is-invalid'); document.getElementById('rPassErr').textContent='Min. 6 characters.'; v=false;
+  } else { p.classList.remove('is-invalid'); p.classList.add('is-valid'); }
+  // Confirm
+  if(c.value !== p.value) {
+    c.classList.add('is-invalid'); document.getElementById('rConfErr').textContent='Passwords do not match.'; v=false;
+  } else if(c.value.length>=6) { c.classList.remove('is-invalid'); c.classList.add('is-valid'); }
+  if(!v) e.preventDefault();
+});
+</script>
+{% endblock %}
