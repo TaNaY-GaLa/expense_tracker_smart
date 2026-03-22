@@ -1,6 +1,17 @@
-Smart Expense Tracker
+# SpendWise — Expense Tracker
 
 A full-stack web application built with Flask, Bootstrap 5, and Chart.js.
+
+## Project Criteria Covered
+
+| # | Requirement | How it's covered |
+|---|-------------|-----------------|
+| 1 | HTML5 semantic tags, images, links | `<nav>`, `<main>`, `<section>`, `<article>`, `<aside>`, `<footer>`, `<figure>` in all templates |
+| 2 | Bootstrap grid + components | Navbar, cards, grid (col-md-*), badges, modals, alerts, progress bars |
+| 3 | JS form validation (name, email, mobile) | `register.html` validates username, email regex, 10-digit mobile regex, password match |
+| 4 | Flask routes (static + dynamic) | `/`, `/login`, `/register`, `/history`, `/about` with Jinja2 templates |
+| 5 | RESTful API in Flask (JSON) | `/api/transactions` GET/POST, `/api/transactions/<id>` PUT/DELETE, `/api/summary` |
+| 6 | FastAPI-style auto validation | Pydantic models in `app.py` + `/api/validate/transaction` endpoint |
 
 ## Setup
 

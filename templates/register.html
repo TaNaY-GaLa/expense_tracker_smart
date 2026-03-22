@@ -23,7 +23,8 @@
         <div class="alert alert-danger py-2 small"><i class="bi bi-exclamation-triangle me-1"></i>{{ error }}</div>
         {% endif %}
 
-        <form id="regForm" method="POST" novalidate>
+        <form id="regForm" method="POST" action="{% url 'register' %}" novalidate>
+        {% csrf_token %}
           <div class="row g-3">
             <div class="col-12">
               <label class="form-label">Username <span class="text-danger">*</span></label>
@@ -74,7 +75,7 @@
           </button>
         </form>
         <hr class="my-3" style="border-color:var(--cream-dark)">
-        <p class="text-center small mb-0">Already have an account? <a href="{{ url_for('login') }}" class="auth-link">Login here</a></p>
+        <p class="text-center small mb-0">Already have an account? <a href="{% url 'login' %}" class="auth-link">Login here</a></p>
       </div>
     </div>
   </div>

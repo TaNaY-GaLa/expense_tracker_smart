@@ -1,5 +1,5 @@
 // ===== ML.JS — FastAPI Integration (Port 8000) =====
-const ML_BASE = "http://localhost:8000";
+const ML_BASE = "http://localhost:8001";
 
 // ── 1. Category Predictor ─────────────────────────────────────
 let mlDebounceTimer = null;

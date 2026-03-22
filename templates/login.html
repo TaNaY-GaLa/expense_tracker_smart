@@ -25,7 +25,8 @@
         <div class="alert alert-danger py-2 small"><i class="bi bi-exclamation-triangle me-1"></i>{{ error }}</div>
         {% endif %}
 
-        <form id="loginForm" method="POST" novalidate>
+        <form id="loginForm" method="POST" action="{% url 'login' %}" novalidate>
+        {% csrf_token %}
           <div class="mb-3">
             <label class="form-label">Username</label>
             <div class="input-group">
@@ -48,7 +49,7 @@
           </button>
         </form>
         <hr class="my-3" style="border-color:var(--cream-dark)">
-        <p class="text-center small mb-0">Don't have an account? <a href="{{ url_for('register') }}" class="auth-link">Register here</a></p>
+        <p class="text-center small mb-0">Don't have an account? <a href="{% url 'register' %}" class="auth-link">Register here</a></p>
       </div>
     </div>
   </div>

@@ -6,7 +6,7 @@ function formatDate(d){
 }
 
 async function loadData(){
-  const res=await fetch('/api/transactions');
+  const res=await fetch('/api/transactions/');
   const data=await res.json();
   allTransactions=data.transactions||[];
   const now=new Date();

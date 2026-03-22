@@ -296,7 +296,7 @@ async function createSplit() {
 
   const payload = { title, total, date, paid_by: paidBy, friends, split_type: type, shares, settlements };
 
-  const res = await fetch('/api/splits', {
+  const res = await fetch('/api/splits/', {
     method: 'POST', headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(payload)
   });
@@ -316,7 +316,7 @@ async function createSplit() {
 
 // ── Load & Render ──────────────────────────────────────────
 async function loadSplits() {
-  const res = await fetch('/api/splits');
+  const res = await fetch('/api/splits/');
   const data = await res.json();
   splits = data.splits || [];
   renderAll();
@@ -488,7 +488,7 @@ function renderBalancesTab() {
 
 // ── Settle Actions ─────────────────────────────────────────
 async function settlePerson(splitId, person) {
-  await fetch(`/api/splits/${splitId}/settle`, {
+  await fetch(`/api/splits/${splitId}/settle/`, {
     method: 'POST', headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({ person })
   });
@@ -500,7 +500,7 @@ async function settleMyShare(splitId) {
 }
 
 async function settleAll(splitId) {
-  await fetch(`/api/splits/${splitId}/settle-all`, { method: 'POST' });
+  await fetch(`/api/splits/${splitId}/settle-all/`, { method: 'POST' });
   loadSplits();
 }
 
@@ -519,7 +519,7 @@ async function settleWithFriend(friendName) {
 
 async function deleteSplit(id) {
   if (!confirm('Delete this split?')) return;
-  await fetch(`/api/splits/${id}`, { method: 'DELETE' });
+  await fetch(`/api/splits/${id}/`, { method: 'DELETE' });
   loadSplits();
 }
 </script>

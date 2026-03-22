@@ -104,9 +104,9 @@ document.getElementById('messMonth').value = new Date().toISOString().slice(0,7)
 let messBills = [];
 
 async function loadMess() {
-  const res = await fetch('/api/mess');
+  const res = await fetch('/api/mess/');
   const data = await res.json();
-  messBills = data.mess_bills || [];
+  messBills = data.bills || [];
   renderMessTable();
   updateMessStats();
 }
@@ -154,7 +154,7 @@ async function addMessBill() {
   const month = document.getElementById('messMonth').value;
   const amount = document.getElementById('messAmount').value;
   if (!month || !amount) { alert('Please fill month and amount'); return; }
-  await fetch('/api/mess', {
+  await fetch('/api/mess/', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({month, amount:parseFloat(amount),
       paid: document.getElementById('messPaid').checked,
@@ -167,7 +167,7 @@ async function addMessBill() {
 }
 
 async function togglePaid(id, paid) {
-  await fetch(`/api/mess/${id}`, {
+  await fetch(`/api/mess/${id}/`, {
     method:'PUT', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({paid})
   });
@@ -176,7 +176,7 @@ async function togglePaid(id, paid) {
 
 async function deleteMessBill(id) {
   if (!confirm('Delete this bill?')) return;
-  await fetch(`/api/mess/${id}`, {method:'DELETE'});
+  await fetch(`/api/mess/${id}/`, {method:'DELETE'});
   loadMess();
 }
 

@@ -22,7 +22,7 @@ async function saveProfile() {
     showProfileAlert("Mobile must be a 10-digit number.", "danger"); return;
   }
 
-  const res = await fetch("/api/profile", {
+  const res = await fetch("/api/profile/", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, mobile, language })
@@ -61,7 +61,7 @@ async function changePassword() {
     showPwAlert("Passwords do not match.", "danger"); return;
   }
 
-  const res = await fetch("/api/profile", {
+  const res = await fetch("/api/profile/", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ password: current, new_password: newPw })
@@ -89,7 +89,7 @@ function showPwAlert(msg, type) {
 let goals = [];
 
 async function loadGoals() {
-  const res = await fetch("/api/savings-goals");
+  const res = await fetch("/api/savings-goals/");
   const data = await res.json();
   goals = data.goals || [];
   renderGoals();
@@ -145,7 +145,7 @@ async function addGoal() {
 
   if (!title || !target || !deadline) { alert("Please fill all goal fields."); return; }
 
-  await fetch("/api/savings-goals", {
+  await fetch("/api/savings-goals/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title, target, deadline, saved })
@@ -159,7 +159,7 @@ async function addGoal() {
 
 async function updateGoalSaved(id) {
   const val = parseFloat(document.getElementById(`updateSaved_${id}`)?.value) || 0;
-  await fetch(`/api/savings-goals/${id}`, {
+  await fetch(`/api/savings-goals/${id}/`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ saved: val })
@@ -169,6 +169,6 @@ async function updateGoalSaved(id) {
 
 async function deleteGoal(id) {
   if (!confirm("Delete this goal?")) return;
-  await fetch(`/api/savings-goals/${id}`, { method: "DELETE" });
+  await fetch(`/api/savings-goals/${id}/`, { method: "DELETE" });
   loadGoals();
 }

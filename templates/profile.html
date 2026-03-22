@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Profile — Expense Tracker{% endblock %}
 {% block content %}
 <div class="hero-banner py-3 mb-4">
@@ -14,10 +15,10 @@
       <!-- Avatar -->
       <div class="text-center mb-4">
         <div class="profile-avatar-wrap">
-          <img src="{{ url_for('static', filename='images/profile_placeholder.png') }}" id="profileAvatar" alt="Profile">
+          <img src="{% static 'images/profile_placeholder.png' %}" id="profileAvatar" alt="Profile">
         </div>
-        <h5 class="mt-3 mb-0" style="color:var(--brown-dark)">{{ user.get('username','') }}</h5>
-        <small class="text-muted">Member since {{ user.get('joined','2024') }}</small>
+        <h5 class="mt-3 mb-0" style="color:var(--brown-dark)">{{ request.user.username }}</h5>
+        <small class="text-muted">Member since {{ request.user.date_joined|date:"Y" }}</small>
       </div>
 
       <!-- Edit Profile -->
@@ -26,18 +27,18 @@
         <div id="profileAlert" class="d-none mb-3"></div>
         <div class="mb-3">
           <label class="form-label small fw-semibold">Email</label>
-          <input type="email" class="form-control" id="profileEmail" value="{{ user.get('email','') }}" placeholder="your@email.com">
+          <input type="email" class="form-control" id="profileEmail" value="{{ request.user.email }}" placeholder="your@email.com">
         </div>
         <div class="mb-3">
           <label class="form-label small fw-semibold">Mobile</label>
-          <input type="tel" class="form-control" id="profileMobile" value="{{ user.get('mobile','') }}" placeholder="10-digit number" maxlength="10">
+          <input type="tel" class="form-control" id="profileMobile" value="{{ profile.mobile }}" placeholder="10-digit number" maxlength="10">
         </div>
         <div class="mb-3">
           <label class="form-label small fw-semibold">Language</label>
           <select class="form-select" id="profileLanguage">
-            <option value="en" {% if user.get('language','en')=='en' %}selected{% endif %}>🇬🇧 English</option>
-            <option value="hi" {% if user.get('language')=='hi' %}selected{% endif %}>🇮🇳 हिंदी (Hindi)</option>
-            <option value="mr" {% if user.get('language')=='mr' %}selected{% endif %}>🇮🇳 मराठी (Marathi)</option>
+            <option value="en" {% if profile.language == 'en' %}selected{% endif %}>🇬🇧 English</option>
+            <option value="hi" {% if profile.language == 'hi' %}selected{% endif %}>🇮🇳 हिंदी (Hindi)</option>
+            <option value="mr" {% if profile.language == 'mr' %}selected{% endif %}>🇮🇳 मराठी (Marathi)</option>
           </select>
         </div>
         <button class="btn btn-brown w-100" onclick="saveProfile()">
@@ -128,5 +129,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+<script src="{% static 'js/profile.js' %}"></script>
 {% endblock %}

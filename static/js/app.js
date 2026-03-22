@@ -112,7 +112,7 @@ async function submitTransaction(){
   if(date>today){ showFormError("Can't add expenses for future dates!"); return; }
 
   const body={title,amount,currency,date,category};
-  const url=editId?`/api/transactions/${editId}`:'/api/transactions';
+  const url=editId?`/api/transactions/${editId}/`:'/api/transactions/';
   const method=editId?'PUT':'POST';
   try {
     const res=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -148,7 +148,7 @@ function showWarning(monthly){
 }
 
 function exportCSV(){
-  fetch('/api/transactions').then(r=>r.json()).then(data=>{
+  fetch('/api/transactions/').then(r=>r.json()).then(data=>{
     const rows=[['#','Title','Category','Date','Amount','Currency','Amount (INR)']];
     data.transactions.forEach((t,i)=>rows.push([i+1,t.title,t.category,t.date,t.amount,t.currency,t.amount_inr]));
     const csv=rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
@@ -164,7 +164,7 @@ async function saveBudget(){
   if(!budget||budget<=0){ input.classList.add('is-invalid'); return; }
   input.classList.remove('is-invalid');
   try {
-    const res=await fetch('/api/budget',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({budget})});
+    const res=await fetch('/api/budget/',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({budget})});
     if(!res.ok) return;
     bootstrap.Modal.getOrCreateInstance(document.getElementById('budgetModal')).hide();
     if(typeof loadData==='function') loadData();
@@ -173,6 +173,6 @@ async function saveBudget(){
 
 async function deleteTransaction(id){
   if(!confirm('Delete this expense? This cannot be undone.')) return;
-  await fetch(`/api/transactions/${id}`,{method:'DELETE'});
+  await fetch(`/api/transactions/${id}/`,{method:'DELETE'});
   if(typeof loadData==='function') loadData();
 }

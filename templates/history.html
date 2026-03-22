@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block content %}
 
 <div class="currency-hero">
@@ -160,5 +161,5 @@
 
 {% endblock %}
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/history.js') }}"></script>
+<script src="{% static 'js/history.js' %}"></script>
 {% endblock %}

@@ -1,7 +1,7 @@
 let pieChartObj=null, lineChartObj=null;
 
 async function loadData(){
-  const [txnRes,sumRes]=await Promise.all([fetch('/api/transactions'),fetch('/api/summary')]);
+  const [txnRes,sumRes]=await Promise.all([fetch('/api/transactions/'),fetch('/api/summary/')]);
   const txnData=await txnRes.json();
   const summary=await sumRes.json();
   const transactions=txnData.transactions||[];
