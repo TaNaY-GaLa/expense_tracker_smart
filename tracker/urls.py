@@ -42,5 +42,12 @@ urlpatterns = [
     path('blog/',                 views.blog_list,   name='blog_list'),
     path('blog/create/',          views.blog_create, name='blog_create'),
     path('blog/<int:id>/',        views.blog_detail, name='blog_detail'),
+    path('blog/edit/<int:id>/',   views.blog_edit,   name='blog_edit'),
     path('blog/delete/<int:id>/', views.blog_delete, name='blog_delete'),
+
+    # ── DRF API ─────────────────────────────────────────────
+    path('drf/transactions/',          views.drf_transactions,       name='drf_transactions'),
+    path('drf/transactions/<int:id>/', views.drf_transaction_detail, name='drf_transaction_detail'),
+    path('drf/blog/',                  views.drf_blog_list,          name='drf_blog_list'),
+    path('drf/blog/<int:id>/',         views.drf_blog_detail,        name='drf_blog_detail'),
 ]

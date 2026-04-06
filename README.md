@@ -260,3 +260,7 @@ The admin panel at `/admin` gives full visibility and control over all applicati
 - Add PDF report generation for monthly expense summaries
 
 ---
+
+## Built By
+
+Team NAT

@@ -117,9 +117,13 @@ async function submitTransaction(){
   try {
     const res=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const data=await res.json();
-    if(!res.ok){ showFormError(data.error||'Something went wrong. Try again!'); return; }
+    if(!res.ok){ showFormError(data.error||'Something went wrong. Try again!'); 
+      if(typeof shakeElement==='function') shakeElement(document.getElementById('formError'));
+      return; 
+    }
     bootstrap.Modal.getOrCreateInstance(document.getElementById('addModal')).hide();
     resetModal();
+    if(typeof showToast==='function') showToast(editId ? 'Expense updated!' : 'Expense added!', 'success');
     if(typeof loadData==='function') loadData();
   } catch(e){ showFormError('Network error. Check your connection!'); }
 }
@@ -174,5 +178,6 @@ async function saveBudget(){
 async function deleteTransaction(id){
   if(!confirm('Delete this expense? This cannot be undone.')) return;
   await fetch(`/api/transactions/${id}/`,{method:'DELETE'});
+  if(typeof showToast==='function') showToast('Expense deleted!', 'info');
   if(typeof loadData==='function') loadData();
 }

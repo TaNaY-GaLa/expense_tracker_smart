@@ -18,6 +18,14 @@ async function loadData(){
   document.getElementById('totalCount').textContent=transactions.length;
   document.getElementById('allTotal').textContent=fmt(allTotal);
 
+  // Number counter animations
+  if(typeof animateCounter === 'function') {
+    animateCounter(document.getElementById('monthExpense'), monthExp);
+    animateCounter(document.getElementById('yearExpense'), yearExp);
+    animateCounter(document.getElementById('allTotal'), allTotal);
+    animateCounter(document.getElementById('totalCount'), transactions.length, '', '', 800);
+  }
+
   showWarning(monthExp);
 
   const budget=summary.budget||0;
@@ -26,8 +34,13 @@ async function loadData(){
     budgetSection.classList.remove('d-none');
     const pct=Math.min((monthExp/budget)*100,100);
     const bar=document.getElementById('budgetBar');
-    bar.style.width=pct+'%';
     bar.className='progress-bar'+(pct>75?' warn':'');
+    // Animated progress bar fill
+    if(typeof fillProgressBar === 'function') {
+      fillProgressBar(bar, pct);
+    } else {
+      bar.style.width=pct+'%';
+    }
     document.getElementById('budgetLabel').textContent=`${fmt(monthExp)} / ${fmt(budget)}`;
     document.getElementById('budgetMsg').textContent=pct>=100?'⚠️ Budget exceeded! Time to cut back.':((100-pct).toFixed(1)+'% remaining this month');
     document.getElementById('budgetInput').value=budget;
