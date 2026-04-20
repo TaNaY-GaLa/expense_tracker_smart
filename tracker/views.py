@@ -105,6 +105,10 @@ def profile_page(request):
         'profile': profile,
     })
 
+def info_page(request):
+    """Task 1 — Standalone HTML5 About/Info page. Public (no login required)."""
+    return render(request, 'info.html')
+
 
 # ── Transactions API ────────────────────────────────────────────
 @csrf_exempt
@@ -438,132 +442,7 @@ def blog_create(request):
     return render(request, 'blog_create.html', {'error': error})
 
 @login_required
-def blog_edit(request, id):
-    post = get_object_or_404(Post, id=id, author=request.user)
-    error = None
-    if request.method == 'POST':
-        title   = request.POST.get('title', '').strip()
-        content = request.POST.get('content', '').strip()
-        if not title:
-            error = 'Title cannot be empty.'
-        elif not content:
-            error = 'Content cannot be empty.'
-        else:
-            post.title   = title
-            post.content = content
-            post.save()
-            return redirect('blog_detail', id=post.id)
-    return render(request, 'blog_edit.html', {'post': post, 'error': error})
-
-
-@login_required
 def blog_delete(request, id):
     post = get_object_or_404(Post, id=id, author=request.user)
     post.delete()
     return redirect('blog_list')
-
-
-# ── Django REST Framework API ───────────────────────────────────
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework import serializers, status
-
-
-# — Serializers —
-
-class TransactionSerializer(serializers.ModelSerializer):
-    amount_inr = serializers.FloatField(read_only=True)
-
-    class Meta:
-        from .models import Transaction
-        model  = Transaction
-        fields = ['id', 'title', 'amount', 'category', 'date', 'currency', 'amount_inr']
-        read_only_fields = ['id', 'amount_inr']
-
-
-class PostSerializer(serializers.ModelSerializer):
-    author = serializers.StringRelatedField(read_only=True)
-
-    class Meta:
-        from .models import Post
-        model  = Post
-        fields = ['id', 'title', 'content', 'author', 'created_at', 'updated_at']
-        read_only_fields = ['id', 'author', 'created_at', 'updated_at']
-
-
-# — DRF Transaction endpoints —
-
-@api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
-def drf_transactions(request):
-    """GET all transactions / POST create a new one."""
-    if request.method == 'GET':
-        txns = Transaction.objects.filter(user=request.user)
-        return Response(TransactionSerializer(txns, many=True).data)
-
-    serializer = TransactionSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save(user=request.user)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([IsAuthenticated])
-def drf_transaction_detail(request, id):
-    """GET / PUT / DELETE a single transaction."""
-    txn = get_object_or_404(Transaction, id=id, user=request.user)
-
-    if request.method == 'GET':
-        return Response(TransactionSerializer(txn).data)
-
-    if request.method == 'PUT':
-        serializer = TransactionSerializer(txn, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    txn.delete()
-    return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-# — DRF Blog endpoints —
-
-@api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
-def drf_blog_list(request):
-    """GET all posts / POST create a new post."""
-    if request.method == 'GET':
-        posts = Post.objects.all()
-        return Response(PostSerializer(posts, many=True).data)
-
-    serializer = PostSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save(author=request.user)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([IsAuthenticated])
-def drf_blog_detail(request, id):
-    """GET / PUT / DELETE a single blog post (PUT/DELETE only by author)."""
-    post = get_object_or_404(Post, id=id)
-
-    if request.method == 'GET':
-        return Response(PostSerializer(post).data)
-
-    if post.author != request.user:
-        return Response({'error': 'You can only modify your own posts.'}, status=status.HTTP_403_FORBIDDEN)
-
-    if request.method == 'PUT':
-        serializer = PostSerializer(post, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    post.delete()
-    return Response(status=status.HTTP_204_NO_CONTENT)

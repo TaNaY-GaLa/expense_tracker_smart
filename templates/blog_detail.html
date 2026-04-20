@@ -27,10 +27,7 @@
               <div class="text-muted small">{{ post.created_at|date:"d M Y" }}</div>
             </div>
             {% if request.user == post.author %}
-            <div class="ms-auto d-flex gap-2">
-              <a href="{% url 'blog_edit' post.id %}" class="btn btn-sm btn-outline-brown">
-                <i class="bi bi-pencil me-1"></i>Edit
-              </a>
+            <div class="ms-auto">
               <a href="{% url 'blog_delete' post.id %}"
                  onclick="return confirm('Delete this post?')"
                  class="btn btn-sm btn-outline-danger">

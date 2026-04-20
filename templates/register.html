@@ -59,6 +59,10 @@
                 <button class="btn btn-outline-secondary" type="button" onclick="tp('rPass')"><i class="bi bi-eye"></i></button>
               </div>
               <div class="invalid-feedback" id="rPassErr"></div>
+              <div class="progress mt-2" style="height:5px;border-radius:4px;">
+                <div class="progress-bar" id="strengthBar" style="width:0%;transition:width .3s,background .3s;"></div>
+              </div>
+              <div class="form-text" id="strengthLabel" style="font-size:0.78rem;"></div>
             </div>
             <div class="col-12 col-sm-6">
               <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
@@ -82,33 +86,98 @@
 </div>
 
 <script>
-function tp(id) { const e=document.getElementById(id); e.type=e.type==='password'?'text':'password'; }
-document.getElementById('rMobile').addEventListener('input', function(){ this.value=this.value.replace(/\D/g,''); });
+/* ── Task 3: Client-side form validation ─────────────────────────────
+   Rules:
+   • Username  — 3–20 alphanumeric / underscore characters
+   • Email     — standard regex (user@domain.tld)
+   • Mobile    — exactly 10 digits, first digit 6–9 (Indian mobile)
+   • Password  — minimum 6 characters
+   • Confirm   — must match password
+   All rules are checked on submit AND live (on blur) for instant feedback.
+──────────────────────────────────────────────────────────────────── */
+
+function tp(id) {
+  const e = document.getElementById(id);
+  e.type = e.type === 'password' ? 'text' : 'password';
+}
+
+// ── Validation rules ──
+const RULES = {
+  rUser:   { re: /^[a-zA-Z0-9_]{3,20}$/, msg: 'Username must be 3–20 alphanumeric characters (letters, digits, _).' },
+  rEmail:  { re: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, msg: 'Enter a valid email address (e.g. user@example.com).' },
+  rMobile: { re: /^[6-9]\d{9}$/, msg: 'Mobile must be exactly 10 digits and start with 6, 7, 8, or 9.' },
+  rPass:   { test: v => v.length >= 6, msg: 'Password must be at least 6 characters long.' },
+};
+
+function setValid(el, errId) {
+  el.classList.remove('is-invalid');
+  el.classList.add('is-valid');
+  document.getElementById(errId).textContent = '';
+}
+
+function setInvalid(el, errId, msg) {
+  el.classList.remove('is-valid');
+  el.classList.add('is-invalid');
+  document.getElementById(errId).textContent = msg;
+}
+
+function validateField(id, errId) {
+  const el = document.getElementById(id);
+  const val = el.value.trim();
+  const rule = RULES[id];
+  const ok = rule.re ? rule.re.test(val) : rule.test(val);
+  ok ? setValid(el, errId) : setInvalid(el, errId, rule.msg);
+  return ok;
+}
+
+function validateConfirm() {
+  const p = document.getElementById('rPass');
+  const c = document.getElementById('rConf');
+  if (c.value === p.value && c.value.length >= 6) {
+    setValid(c, 'rConfErr'); return true;
+  }
+  setInvalid(c, 'rConfErr', c.value.length === 0 ? 'Please confirm your password.' : 'Passwords do not match.');
+  return false;
+}
+
+// ── Live (on-blur) validation ──
+document.getElementById('rUser').addEventListener('blur',   () => validateField('rUser',   'rUserErr'));
+document.getElementById('rEmail').addEventListener('blur',  () => validateField('rEmail',  'rEmailErr'));
+document.getElementById('rMobile').addEventListener('blur', () => validateField('rMobile', 'rMobileErr'));
+document.getElementById('rPass').addEventListener('blur',   () => validateField('rPass',   'rPassErr'));
+document.getElementById('rConf').addEventListener('blur',   validateConfirm);
+
+// ── Allow only digits in mobile field ──
+document.getElementById('rMobile').addEventListener('input', function() {
+  this.value = this.value.replace(/\D/g, '').slice(0, 10);
+});
+
+// ── Strength indicator for password ──
+document.getElementById('rPass').addEventListener('input', function() {
+  const len = this.value.length;
+  const bar = document.getElementById('strengthBar');
+  const label = document.getElementById('strengthLabel');
+  if (!bar) return;
+  if (len === 0)      { bar.style.width='0%'; bar.className='progress-bar'; label.textContent=''; }
+  else if (len < 4)   { bar.style.width='25%'; bar.className='progress-bar bg-danger'; label.textContent='Weak'; }
+  else if (len < 6)   { bar.style.width='50%'; bar.className='progress-bar bg-warning'; label.textContent='Fair'; }
+  else if (len < 10)  { bar.style.width='75%'; bar.className='progress-bar bg-info'; label.textContent='Good'; }
+  else                { bar.style.width='100%'; bar.className='progress-bar bg-success'; label.textContent='Strong'; }
+});
+
+// ── Submit: validate all fields ──
 document.getElementById('regForm').addEventListener('submit', function(e) {
-  let v=true;
-  const u=document.getElementById('rUser'), em=document.getElementById('rEmail'),
-        mo=document.getElementById('rMobile'), p=document.getElementById('rPass'), c=document.getElementById('rConf');
-  // Username
-  if(!/^[a-zA-Z0-9_]{3,20}$/.test(u.value.trim())) {
-    u.classList.add('is-invalid'); document.getElementById('rUserErr').textContent='3–20 alphanumeric chars.'; v=false;
-  } else { u.classList.remove('is-invalid'); u.classList.add('is-valid'); }
-  // Email
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em.value.trim())) {
-    em.classList.add('is-invalid'); document.getElementById('rEmailErr').textContent='Enter valid email (e.g. user@example.com).'; v=false;
-  } else { em.classList.remove('is-invalid'); em.classList.add('is-valid'); }
-  // Mobile
-  if(!/^[6-9]\d{9}$/.test(mo.value.trim())) {
-    mo.classList.add('is-invalid'); document.getElementById('rMobileErr').textContent='10-digit Indian mobile, starts with 6–9.'; v=false;
-  } else { mo.classList.remove('is-invalid'); mo.classList.add('is-valid'); }
-  // Password
-  if(p.value.length < 6) {
-    p.classList.add('is-invalid'); document.getElementById('rPassErr').textContent='Min. 6 characters.'; v=false;
-  } else { p.classList.remove('is-invalid'); p.classList.add('is-valid'); }
-  // Confirm
-  if(c.value !== p.value) {
-    c.classList.add('is-invalid'); document.getElementById('rConfErr').textContent='Passwords do not match.'; v=false;
-  } else if(c.value.length>=6) { c.classList.remove('is-invalid'); c.classList.add('is-valid'); }
-  if(!v) e.preventDefault();
+  const u  = validateField('rUser',   'rUserErr');
+  const em = validateField('rEmail',  'rEmailErr');
+  const mo = validateField('rMobile', 'rMobileErr');
+  const p  = validateField('rPass',   'rPassErr');
+  const c  = validateConfirm();
+  if (!(u && em && mo && p && c)) {
+    e.preventDefault();
+    // Scroll to first error
+    const first = document.querySelector('.is-invalid');
+    if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
 });
 </script>
 {% endblock %}

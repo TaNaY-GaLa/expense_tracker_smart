@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import api_views
 
 urlpatterns = [
     # ── Pages ──────────────────────────────────────────────
@@ -8,6 +9,9 @@ urlpatterns = [
     path('split/',     views.split_page,   name='split_page'),
     path('mess/',      views.mess_page,    name='mess_page'),
     path('profile/',   views.profile_page, name='profile_page'),
+
+    # ── Info / About (Task 1) ──────────────────────────────
+    path('info/',      views.info_page,    name='info_page'),
 
     # ── Auth ───────────────────────────────────────────────
     path('login/',    views.login_view,    name='login'),
@@ -38,16 +42,27 @@ urlpatterns = [
     path('api/splits/<int:id>/settle/',    views.api_split_settle,     name='api_split_settle'),
     path('api/splits/<int:id>/settle-all/', views.api_split_settle_all, name='api_split_settle_all'),
 
-    # ── Blog ────────────────────────────────────────────────
+    # ── Blog (Django template views) ───────────────────────
     path('blog/',                 views.blog_list,   name='blog_list'),
     path('blog/create/',          views.blog_create, name='blog_create'),
     path('blog/<int:id>/',        views.blog_detail, name='blog_detail'),
-    path('blog/edit/<int:id>/',   views.blog_edit,   name='blog_edit'),
     path('blog/delete/<int:id>/', views.blog_delete, name='blog_delete'),
 
-    # ── DRF API ─────────────────────────────────────────────
-    path('drf/transactions/',          views.drf_transactions,       name='drf_transactions'),
-    path('drf/transactions/<int:id>/', views.drf_transaction_detail, name='drf_transaction_detail'),
-    path('drf/blog/',                  views.drf_blog_list,          name='drf_blog_list'),
-    path('drf/blog/<int:id>/',         views.drf_blog_detail,        name='drf_blog_detail'),
+    # ════════════════════════════════════════════════════════
+    # ── Task 11: DRF Blog REST API ─────────────────────────
+    # ════════════════════════════════════════════════════════
+
+    # Auth endpoints
+    path('api/v1/auth/register/', api_views.RegisterAPIView.as_view(),  name='drf_register'),
+    path('api/v1/auth/login/',    api_views.LoginAPIView.as_view(),     name='drf_login'),
+    path('api/v1/auth/logout/',   api_views.LogoutAPIView.as_view(),    name='drf_logout'),
+
+    # Blog post endpoints
+    path('api/v1/blog/posts/',               api_views.PostListCreateAPIView.as_view(),           name='drf_post_list'),
+    path('api/v1/blog/posts/mine/',          api_views.MyPostsAPIView.as_view(),                  name='drf_my_posts'),
+    path('api/v1/blog/posts/<int:id>/',      api_views.PostRetrieveUpdateDestroyAPIView.as_view(), name='drf_post_detail'),
+    path('api/v1/blog/posts/<int:id>/similar/', api_views.SimilarPostsAPIView.as_view(),          name='drf_similar_posts'),
+
+    # Stats
+    path('api/v1/blog/stats/', api_views.BlogStatsAPIView.as_view(), name='drf_blog_stats'),
 ]
